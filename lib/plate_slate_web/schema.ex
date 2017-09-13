@@ -9,13 +9,15 @@
 defmodule PlateSlateWeb.Schema do
   use Absinthe.Schema
   alias PlateSlate.{Menu, Repo}
+  alias PlateSlateWeb.Resolvers
+  import Ecto.Query
 
   @desc "The list of available items on the menu"
   query do
     field :menu_items, list_of(:menu_item) do
-      resolve fn _, _, _ ->
-        {:ok, Repo.all(Menu.Item)}
-      end
+      arg :matching, :string
+      arg :order, type: :sort_order, default_value: :asc
+      resolve &Resolvers.Menu.menu_items/3
     end
   end
 
@@ -31,5 +33,10 @@ defmodule PlateSlateWeb.Schema do
 
     @desc "Displays the price of the menu item"
     field :price, :integer
+  end
+
+  enum :sort_order do
+    value :asc
+    value :desc
   end
 end
