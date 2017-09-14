@@ -10,7 +10,7 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
   use PlateSlateWeb.ConnCase, async: true
 
   setup do
-    Code.load_file("priv/repo/seeds.exs") 
+    Code.load_file("priv/repo/seeds.exs")
   end
 
   @query """
@@ -21,33 +21,29 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
   }
   """
   test "menuItems field returns menu items" do
-    conn = build_conn() 
+    conn = build_conn()
     conn = get conn, "/api", query: @query
-    assert json_response(conn, 200) == %{ 
-      "data" => %{
-        "menuItems" => [
-          %{"name" => "Bánh mì"},
-          %{"name" => "Chocolate Milkshake"},
-          %{"name" => "Croque Monsieur"},
-          %{"name" => "French Fries"},
-          %{"name" => "Lemonade"},
-          %{"name" => "Masala Chai"},
-          %{"name" => "Muffuletta"},
-          %{"name" => "Papadum"},
-          %{"name" => "Pasta Salad"},
-          %{"name" => "Rueben"},
-          %{"name" => "Soft Drink"},
-          %{"name" => "Vada Pav"},
-          %{"name" => "Vanilla Milkshake"},
-          %{"name" => "Water"}
-        ]
-      }
-    }
+    assert json_response(conn, 200) == %{"data" => %{"menuItems" => [
+      %{"name" => "Bánh mì"},
+      %{"name" => "Chocolate Milkshake"},
+      %{"name" => "Croque Monsieur"},
+      %{"name" => "French Fries"},
+      %{"name" => "Lemonade"},
+      %{"name" => "Masala Chai"},
+      %{"name" => "Muffuletta"},
+      %{"name" => "Papadum"},
+      %{"name" => "Pasta Salad"},
+      %{"name" => "Rueben"},
+      %{"name" => "Soft Drink"},
+      %{"name" => "Vada Pav"},
+      %{"name" => "Vanilla Milkshake"},
+      %{"name" => "Water"}
+    ]}}
   end
 
   @query """
   {
-    menuItems(matching: "rue") {
+    menuItems(filter: {name: "rue"}) {
       name
     }
   }
@@ -62,10 +58,10 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
       }
     }
   end
-  
+
   @query """
   {
-    menuItems(matching: 123) {
+    menuItems(filter: {name: 123}) {
       name
     }
   }
@@ -75,19 +71,19 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
     assert %{"errors" => [
       %{"message" => message}
     ]} = json_response(response, 400)
-    assert message == "Argument \"matching\" has invalid value 123."
+    assert message == "Argument \"filter\" has invalid value {name: 123}.\nIn field \"name\": Expected type \"String\", found 123."
   end
 
   @query """
   query ($term: String) {
-    menuItems(matching: $term) {
+    menuItems(filter: {name: $term}) {
       name
     }
   }
   """
-  @variables %{"term" => "rue"}
+  @variables %{"term" => "rue"} 
   test "menuItems field returns menuItems filtered by name when using a variable" do
-    response = get(build_conn(), "/api", query: @query, variables: @variables)
+    response = get(build_conn(), "/api", query: @query, variables: @variables) 
     assert json_response(response, 200) == %{
       "data" => %{
         "menuItems" => [
@@ -98,17 +94,106 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
   end
 
   @query """
-  query ($order: SortOrder!) {
+  query ($term: String) {
+    menuItems(filter: {name: $term}) {
+      name
+    }
+  }
+  """
+  @variables %{"term" => 1} 
+  test "menuItems field returns an error when using a bad variable value" do
+    response = get(build_conn(), "/api", query: @query, variables: @variables)
+    assert %{"errors" => _} = json_response(response, 400) 
+  end
+
+
+  @query """
+  {
+    menuItems(order: DESC) {
+      name
+    }
+  }
+  """
+  test "menuItems field returns menuItems descending when asked using literals" do
+    response = get(build_conn(), "/api", query: @query)
+    assert %{
+      "data" => %{"menuItems" => [%{"name" => "Water"} | _]}
+    } = json_response(response, 200)
+  end
+
+  @query """
+  {
+    menuItems(order: ASC) {
+      name
+    }
+  }
+  """
+  test "menuItems field returns menuItems ascending when asked using literals" do
+    response = get(build_conn(), "/api", query: @query)
+    assert %{"data" => %{"menuItems" => [%{"name" => "Bánh mì"} | _]}} = json_response(response, 200)
+  end
+
+  @query """
+  {
+    menuItems {
+      name
+    }
+  }
+  """
+  test "menuItems field returns menuItems ascending when asked using the default value" do
+    response = get(build_conn(), "/api", query: @query)
+    assert %{"data" => %{"menuItems" => [%{"name" => "Bánh mì"} | _]}} = json_response(response, 200)
+  end
+
+  @query """
+  query ($order: SortOrder!) { 
     menuItems(order: $order) {
       name
     }
   }
   """
   @variables %{"order" => "DESC"}
-  test "menuItems field returns menuItems descending when asked using literals" do
+  test "menuItems field returns menuItems descending when asked using variables" do
     response = get(build_conn(), "/api", query: @query, variables: @variables)
     assert %{
       "data" => %{"menuItems" => [%{"name" => "Water"} | _]}
     } = json_response(response, 200)
   end
+
+  @variables %{"order" => "ASC"}
+  test "menuItems field returns menuItems ascending when asked using variables" do
+    response = get(build_conn(), "/api", query: @query, variables: @variables)
+    assert %{"data" => %{"menuItems" => [%{"name" => "Bánh mì"} | _]}} = json_response(response, 200)
+  end
+
+  @query """
+  {
+    menuItems(filter: {category: "Sandwiches", tag: "Vegetarian"}) {
+      name
+    }
+  }
+  """
+  test "menuItems field returns menuItems, filtering with a literal" do
+    response = get(build_conn(), "/api", query: @query)
+    assert %{
+      "data" => %{"menuItems" => [%{"name" => "Vada Pav"}]}
+    } == json_response(response, 200)
+  end
+
+  @query """
+  query ($filter: MenuItemFilter!) {
+    menuItems(filter: $filter) {
+      name
+    }
+  }
+  """
+  @variables %{filter: %{"tag" => "Vegetarian", "category" => "Sandwiches"}}
+  test "menuItems field returns menuItems, filtering with a variable" do
+    response = get(build_conn(), "/api", query: @query, variables: @variables)
+    assert %{
+      "data" => %{"menuItems" => [%{"name" => "Vada Pav"}]}
+    } == json_response(response, 200)
+  end
+
 end
+
