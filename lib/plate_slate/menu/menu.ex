@@ -155,10 +155,6 @@ defmodule PlateSlate.Menu do
     end)
   end
 
-  def list_items(_) do
-    Repo.all(Item)
-  end
-
   @doc """
   Gets a single item.
 

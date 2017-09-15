@@ -242,4 +242,22 @@ defmodule PlateSlateWeb.Schema.Query.MenuItemsTest do
     """
     assert expected == message
   end
+
+  @query """
+  query ($filter: MenuItemFilter!) {
+    menuItems(filter: $filter) {
+      name
+    }
+  }
+  """
+  @variables %{filter: %{"addedBefore" => 123}}
+  test "menuItems filtered by custom scalar handles non strings" do
+    response = get(build_conn(), "/api", query: @query, variables: @variables)
+    assert %{
+      "errors" => [%{"locations" => [%{"column" => 0, "line" => 2}], "message" => message}]
+    } = json_response(response, 400)
+
+    assert "Argument \"filter\" has invalid value $filter.\nIn field \"addedBefore\": Expected type \"Date\", found 123." == message
+  end
+
 end

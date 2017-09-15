@@ -6,22 +6,9 @@
 # We make no guarantees that this code is fit for any purpose.
 # Visit http://www.pragmaticprogrammer.com/titles/wwgraphql for more book information.
 #---
-defmodule PlateSlateWeb.Router do
-  use PlateSlateWeb, :router
+defmodule PlateSlateWeb.Schema.MenuTypes do
+  use Absinthe.Schema.Notation
 
-  pipeline :api do
-    plug :accepts, ["json"]
-  end
-
-  scope "/" do
-    pipe_through :api
-
-    forward "/api", Absinthe.Plug,
-      schema: PlateSlateWeb.Schema
-
-    forward "/graphiql", Absinthe.Plug.GraphiQL,
-      schema: PlateSlateWeb.Schema,
-      interface: :simple
-  end
+  # Extracted type definitions
 
 end

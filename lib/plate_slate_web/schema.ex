@@ -8,18 +8,21 @@
 #---
 defmodule PlateSlateWeb.Schema do
   use Absinthe.Schema
-  alias PlateSlate.{Menu, Repo}
-  alias PlateSlateWeb.Resolvers
-  import Ecto.Query
 
-  @desc "The list of available items on the menu"
+  alias PlateSlateWeb.Resolvers
+
+  import_types __MODULE__.MenuTypes
+
   query do
+
     field :menu_items, list_of(:menu_item) do
       arg :filter, :menu_item_filter
       arg :order, type: :sort_order, default_value: :asc
       resolve &Resolvers.Menu.menu_items/3
     end
+
   end
+
 
   scalar :date do
     parse fn input ->
@@ -34,6 +37,11 @@ defmodule PlateSlateWeb.Schema do
     serialize fn date ->
       Date.to_iso8601(date)
     end
+  end
+
+  enum :sort_order do
+    value :asc
+    value :desc
   end
 
   @desc "Filtering options for the menu item list"
@@ -59,6 +67,7 @@ defmodule PlateSlateWeb.Schema do
 
     @desc "Added to the menu after this date"
     field :added_after, :date
+
   end
 
   object :menu_item do
@@ -67,9 +76,5 @@ defmodule PlateSlateWeb.Schema do
     field :description, :string
     field :added_on, :date
   end
-
-  enum :sort_order do
-    value :asc
-    value :desc
-  end
+  # Common types; :date, :sort_order, etc
 end
